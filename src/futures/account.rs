@@ -6,11 +6,10 @@ use serde::Serializer;
 use crate::account::OrderCancellation;
 use crate::client::Client;
 use crate::errors::*;
-use crate::rest_model::{OrderSide, TimeInForce};
-use crate::rest_model::{PairAndWindowQuery, PairQuery};
+use crate::futures::rest_model::{AccountBalance, CanceledOrder, ChangeLeverageResponse, OrderType, Position, Transaction};
+use crate::rest_model::{OrderSide, TimeInForce, PairAndWindowQuery, PairQuery};
 use crate::util::*;
 
-use super::rest_model::{AccountBalance, CanceledOrder, ChangeLeverageResponse, OrderType, Position, Transaction};
 
 #[derive(Clone)]
 pub struct FuturesAccount {
@@ -45,7 +44,7 @@ where
 }
 
 /// Serialize opt bool as str
-fn serialize_opt_as_uppercase<S, T>(t: &Option<T>, serializer: S) -> std::result::Result<S::Ok, S::Error>
+pub fn serialize_opt_as_uppercase<S, T>(t: &Option<T>, serializer: S) -> std::result::Result<S::Ok, S::Error>
 where
     S: Serializer,
     T: ToString,
@@ -58,7 +57,7 @@ where
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct OrderRequest {
+pub struct OrderRequest {
     pub symbol: String,
     pub side: OrderSide,
     pub position_side: Option<PositionSide>,
@@ -76,6 +75,7 @@ struct OrderRequest {
     pub working_type: Option<WorkingType>,
     #[serde(serialize_with = "serialize_opt_as_uppercase")]
     pub price_protect: Option<bool>,
+    pub new_client_order_id: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -98,6 +98,7 @@ impl FuturesAccount {
         qty: impl Into<f64>,
         price: f64,
         time_in_force: TimeInForce,
+        client_order_id: impl Into<String>,
     ) -> Result<Transaction> {
         let order = OrderRequest {
             symbol: symbol.into(),
@@ -114,6 +115,7 @@ impl FuturesAccount {
             callback_rate: None,
             working_type: None,
             price_protect: None,
+            new_client_order_id: Some(client_order_id.into()),
         };
         self.post_order(order).await
     }
@@ -124,6 +126,7 @@ impl FuturesAccount {
         qty: impl Into<f64>,
         price: f64,
         time_in_force: TimeInForce,
+        client_order_id: impl Into<String>,
     ) -> Result<Transaction> {
         let order = OrderRequest {
             symbol: symbol.into(),
@@ -140,6 +143,7 @@ impl FuturesAccount {
             callback_rate: None,
             working_type: None,
             price_protect: None,
+            new_client_order_id: Some(client_order_id.into()),
         };
         self.post_order(order).await
     }
@@ -165,6 +169,7 @@ impl FuturesAccount {
             callback_rate: None,
             working_type: None,
             price_protect: None,
+            new_client_order_id: None,
         };
         self.post_order(order).await
     }
@@ -190,6 +195,7 @@ impl FuturesAccount {
             callback_rate: None,
             working_type: None,
             price_protect: None,
+            new_client_order_id: None,
         };
         self.post_order(order).await
     }
